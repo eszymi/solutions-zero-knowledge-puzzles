@@ -13,10 +13,17 @@ template QuadraticEquation() {
     signal input res;   // Expected result of the equation
     signal output out;  // If res is correct , then return 1 , else 0 . 
 
-    // your code here
+    signal x2 <== x*x;
+    signal ax2 <== a*x2;
+    signal bx <== b*x;
+    signal sum <== ax2+bx+c;
+
+    component ise = IsEqual();
+    sum ==> ise.in[0];
+    res ==> ise.in[1];
+    out <== ise.out;
 }
 
 component main  = QuadraticEquation();
-
 
 

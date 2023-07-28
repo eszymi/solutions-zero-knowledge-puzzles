@@ -19,6 +19,26 @@ include "../node_modules/circomlib/circuits/comparators.circom";
     "out" is the signal output of the circuit. "out" is 1 if the solution is correct, otherwise 0.                                                                               
 */
 
+template CheckSumAndMul () {
+    signal input in[4];
+    signal output Sum;
+    signal output Mul;
+
+    var sum = 0;
+    var mul1 = 1;
+    var mul2 = 1;
+    for (var q = 0; q < 4; q++){
+        sum += in[q];
+        if (q%4 == 0 || q%4 == 1){
+            mul1 = mul1*in[q];
+        } else {
+            mul2 = mul2*in[q];
+        }
+        
+    }
+    Sum <-- sum;
+    Mul <-- mul1*mul2;
+}
 
 template Sudoku () {
     // Question Setup 
@@ -73,8 +93,58 @@ template Sudoku () {
     3 === row4[3].out + row4[2].out + row4[1].out + row4[0].out; 
 
     // Write your solution from here.. Good Luck!
-    
-    
+
+    var correct;
+
+    // checking the sum and mul of each row
+    component checkRow[4];
+    component sumRow[4];
+    component mulRow[4];
+    for(var q = 0; q< 4; q++){
+        checkRow[q] = CheckSumAndMul();
+        sumRow[q] = IsEqual();
+        mulRow[q] = IsEqual();
+        for(var i = 0; i < 4; i++){
+            checkRow[q].in[i] <== solution[q*4+i];
+        }
+        checkRow[q].Mul ==> mulRow[q].in[0];
+        24 ==> mulRow[q].in[1];
+        checkRow[q].Sum ==> sumRow[q].in[0];
+        10 ==> sumRow[q].in[1];
+        correct += sumRow[q].out + mulRow[q].out;
+    }
+
+    //checking the sum and mul of each column
+    component checkColumn[4];
+    component sumCol[4];
+    component mulCol[4];
+    for(var q = 0; q< 4; q++){
+        checkColumn[q] = CheckSumAndMul();
+        sumCol[q] = IsEqual();
+        mulCol[q] = IsEqual();
+        var k=0;
+        for(var i = 0; i < 16; i++){
+            if(i%4 == q){
+                checkColumn[q].in[k] <== solution[i];
+                k += 1;
+            }
+        }
+    }
+    for(var q = 0; q< 4; q++){
+        checkColumn[q].Mul ==> mulCol[q].in[0];
+        24 ==> mulCol[q].in[1];
+        checkColumn[q].Sum ==> sumCol[q].in[0];
+        10 ==> sumCol[q].in[1];
+        correct += sumCol[q].out;
+        correct += mulCol[q].out;
+    }
+
+    component finalCheck = IsEqual();
+    finalCheck.in[0] <== correct;
+    finalCheck.in[1] <== 16;
+    out <== finalCheck.out;
+
+     
    
 }
 
